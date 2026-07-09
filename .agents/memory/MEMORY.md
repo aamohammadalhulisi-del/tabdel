@@ -1,0 +1,2 @@
+- [Tabdeel platform overview](tabdeel-overview.md) — Arabic barter platform; stack, design decisions, and gotchas across the full codebase.
+- [Generated hook usage pattern](tabdeel-hook-pattern.md) — orval hooks take params as first arg, React Query options as second; never wrap params in a `query` key.

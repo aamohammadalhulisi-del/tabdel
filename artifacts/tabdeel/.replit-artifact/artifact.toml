@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "تبديل - Tabdeel"
+version = "1.0.0"
+id = "artifacts/tabdeel"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18173
+
+[services.development]
+run = "pnpm --filter @workspace/tabdeel run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tabdeel", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/tabdeel/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18173"
+BASE_PATH = "/"
