@@ -8,7 +8,6 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { pool } from "@workspace/db";
 import helmet from "helmet";
-import WelcomeAd from '@/components/ads/WelcomeAd';
 const PgSession = connectPgSimple(session);
 
 // Fail fast if SESSION_SECRET is not set — never use a hardcoded fallback
