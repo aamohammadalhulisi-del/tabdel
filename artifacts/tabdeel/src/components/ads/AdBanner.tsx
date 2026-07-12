@@ -16,16 +16,14 @@ export default function AdBanner() {
   }, []);
 
   return (
-    <div className="w-full max-w-[600px] min-h-[280px] mx-auto my-6">
+    <div className="w-full flex justify-center my-6 overflow-hidden">
       <ins
         className="adsbygoogle"
         style={{
-          display: "block",
-          width: "100%",
-          minHeight: "280px",
+          display: "inline-block",
+          width: "300px",
+          height: "250px",
         }}
-        data-ad-format="fluid"
-        data-ad-layout-key="-fb+5w+4e-db+86"
         data-ad-client="ca-pub-3491956593400214"
         data-ad-slot="9594047856"
       />
