@@ -19,19 +19,34 @@ export default defineConfig({
         "attached_assets",
       ),
     },
-    dedupe: ["react", "react-dom"],
+
+    dedupe: [
+      "react",
+      "react-dom",
+    ],
   },
 
   root: path.resolve(import.meta.dirname),
 
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: path.resolve(
+      import.meta.dirname,
+      "dist/public"
+    ),
     emptyOutDir: true,
   },
 
   server: {
     port: 3000,
     host: "0.0.0.0",
+
+    proxy: {
+      "/api": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 
   preview: {

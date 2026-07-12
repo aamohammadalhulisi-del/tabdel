@@ -139,16 +139,20 @@ export default function Home() {
           </form>
 
 
-        </div>
+               </div>
 
       </section>
 
 
-
+      {/* Advertisement */}
+      <section className="py-6">
+        <div className="container mx-auto px-4">
+          <AdBanner />
+        </div>
+      </section>
 
 
       {/* Categories */}
-
       <section className="py-12">
 
         <div className="container mx-auto px-4">
@@ -364,17 +368,12 @@ export default function Home() {
            </section>
 
 
-            {/* Advertisement */}
-      <section className="py-6">
-        <div className="container mx-auto px-4">
-          <AdBanner />
-        </div>
-      </section>
+           
 
 
 
 
-      {/* Categories */}
+      {/* Bottom CTA */}
       <section className="py-20 bg-accent text-center">
 
 

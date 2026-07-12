@@ -23,16 +23,25 @@ export default function SwapRequests() {
   const receivedParams = { type: GetSwapRequestsType.received };
   const sentParams = { type: GetSwapRequestsType.sent };
 
-  const { data: receivedRequests, isLoading: isLoadingReceived } = useGetSwapRequests(
-    receivedParams,
-    { query: { queryKey: getGetSwapRequestsQueryKey(receivedParams) } }
-  );
+ const { data: receivedResponse, isLoading: isLoadingReceived } = useGetSwapRequests(
+  receivedParams,
+  { query: { queryKey: getGetSwapRequestsQueryKey(receivedParams) } }
+);
 
-  const { data: sentRequests, isLoading: isLoadingSent } = useGetSwapRequests(
-    sentParams,
-    { query: { queryKey: getGetSwapRequestsQueryKey(sentParams) } }
-  );
+const { data: sentResponse, isLoading: isLoadingSent } = useGetSwapRequests(
+  sentParams,
+  { query: { queryKey: getGetSwapRequestsQueryKey(sentParams) } }
+);
 
+
+const receivedRequests = Array.isArray(receivedResponse)
+  ? receivedResponse
+  : (receivedResponse as any)?.requests ?? [];
+
+
+const sentRequests = Array.isArray(sentResponse)
+  ? sentResponse
+  : (sentResponse as any)?.requests ?? [];
   const acceptMutation = useAcceptSwapRequest();
   const rejectMutation = useRejectSwapRequest();
   const completeMutation = useCompleteSwapRequest();
@@ -80,11 +89,21 @@ export default function SwapRequests() {
     return (
       <div className="space-y-4">
         {requests.map(request => {
-          const status = statusMap[request.status];
-          const StatusIcon = status.icon;
-          const isReceived = type === 'received';
-          const otherUser = isReceived ? request.requester : request.listing.owner;
+         const status = statusMap[request.status] || statusMap.pending;
+const StatusIcon = status.icon;
+const isReceived = type === 'received';
 
+if (!request.listing) {
+  return null;
+}
+
+const otherUser = isReceived 
+  ? request.requester 
+  : request.listing.owner;
+
+if (!otherUser) {
+  return null;
+}
           return (
             <Card key={request.id} className="overflow-hidden transition-all hover:shadow-md border-border/60">
               <CardContent className="p-0">
@@ -220,11 +239,17 @@ export default function SwapRequests() {
         </TabsList>
         
         <TabsContent value="received" className="mt-0">
-          <RequestList requests={receivedRequests || []} type="received" isLoading={isLoadingReceived} />
-        </TabsContent>
-        
-        <TabsContent value="sent" className="mt-0">
-          <RequestList requests={sentRequests || []} type="sent" isLoading={isLoadingSent} />
+          <RequestList 
+  requests={receivedRequests} 
+  type="received" 
+  isLoading={isLoadingReceived} 
+/>
+
+<RequestList 
+  requests={sentRequests} 
+  type="sent" 
+  isLoading={isLoadingSent} 
+/>
         </TabsContent>
       </Tabs>
     </div>
