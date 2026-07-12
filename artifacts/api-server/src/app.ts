@@ -2,11 +2,13 @@ import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import session from "express-session";
+import rateLimit from "express-rate-limit";
 import connectPgSimple from "connect-pg-simple";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { pool } from "@workspace/db";
-
+import helmet from "helmet";
+import WelcomeAd from '@/components/ads/WelcomeAd';
 const PgSession = connectPgSimple(session);
 
 // Fail fast if SESSION_SECRET is not set — never use a hardcoded fallback
@@ -18,13 +20,23 @@ if (!SESSION_SECRET) {
 // CORS: allow the Replit preview domain and localhost; credentials require an explicit origin list
 const ALLOWED_ORIGINS = [
   /^https?:\/\/localhost(:\d+)?$/,
+  /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
+  /^https?:\/\/192\.168\.1\.19(:\d+)?$/,
   /^https:\/\/.*\.replit\.dev$/,
   /^https:\/\/.*\.repl\.co$/,
   /^https:\/\/.*\.replit\.app$/,
 ];
 
 const app: Express = express();
+app.use(helmet());
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
+app.use(limiter);
 app.use(
   pinoHttp({
     logger,

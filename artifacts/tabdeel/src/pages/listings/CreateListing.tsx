@@ -28,7 +28,11 @@ export default function CreateListing() {
   const [, setLocation] = useLocation();
   const [images, setImages] = useState<{ url: string; file?: File; isUploading?: boolean }[]>([]);
   
-  const { data: categories } = useGetCategories();
+const { data: categoriesResponse } = useGetCategories();
+
+const categories = Array.isArray(categoriesResponse)
+  ? categoriesResponse
+  : (categoriesResponse as any)?.categories || [];
   const createListingMutation = useCreateListing();
   const uploadImageMutation = useUploadImage();
 
@@ -78,9 +82,17 @@ export default function CreateListing() {
           { data: { base64, filename: img.file.name } },
           {
             onSuccess: (res) => {
-              setImages(prev => prev.map(p => 
-                p.file === img.file ? { url: res.url, isUploading: false } : p
-              ));
+              setImages(prev =>
+  prev.map(p =>
+    p.file === img.file
+      ? {
+          ...p,
+          url: (res as any).url || (res as any).secure_url || p.url,
+          isUploading: false
+        }
+      : p
+  )
+);
             },
             onError: () => {
               toast.error('فشل رفع الصورة');
@@ -211,7 +223,7 @@ export default function CreateListing() {
                     <SelectValue placeholder="اختر القسم" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories?.map(c => (
+                   {Array.isArray(categories) && categories.map(c => (
                       <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                     ))}
                   </SelectContent>

@@ -1,7 +1,8 @@
+import "dotenv/config";
 import app from "./app";
 import { logger } from "./lib/logger";
 
-const rawPort = process.env["PORT"];
+const rawPort = process.env["PORT"] || "3001";
 
 if (!rawPort) {
   throw new Error(

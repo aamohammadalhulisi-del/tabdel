@@ -6,7 +6,7 @@ import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { AuthProvider } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Layout } from '@/components/layout/Layout';
-
+import WelcomeAd from '@/components/ads/WelcomeAd';
 // Pages
 import Home from '@/pages/Home';
 import Login from '@/pages/auth/Login';

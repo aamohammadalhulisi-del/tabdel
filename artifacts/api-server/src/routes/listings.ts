@@ -1,3 +1,4 @@
+import rateLimit from "express-rate-limit";
 import { Router, type IRouter } from "express";
 import { eq, ilike, and, desc, sql, or, count } from "drizzle-orm";
 import {
@@ -20,7 +21,13 @@ import {
 import { requireAuth, requireAdmin } from "../lib/auth";
 
 const router: IRouter = Router();
-
+const createListingLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 10,
+  message: {
+    error: "لقد أنشأت عدداً كبيراً من الإعلانات، حاول مرة أخرى بعد قليل."
+  }
+});
 async function buildListingRow(listing: typeof listingsTable.$inferSelect) {
   const [owner] = await db
     .select({
@@ -94,7 +101,7 @@ router.get("/listings", async (req, res): Promise<void> => {
   res.json({ listings, total: Number(total), page: pageNum, totalPages: Math.ceil(Number(total) / limitNum) });
 });
 
-router.post("/listings", requireAuth, async (req, res): Promise<void> => {
+router.post("/listings", requireAuth, createListingLimiter, async (req, res): Promise<void> => {
   const userId = (req.session as any).userId as number;
   const parsed = CreateListingBody.safeParse(req.body);
   if (!parsed.success) {
@@ -103,7 +110,19 @@ router.post("/listings", requireAuth, async (req, res): Promise<void> => {
   }
 
   const { title, description, condition, wantsInExchange, categoryId, city, images } = parsed.data;
+if (!title.trim()) {
+  res.status(400).json({ error: "عنوان الإعلان مطلوب" });
+  return;
+}
 
+if (title.length > 100) {
+  res.status(400).json({ error: "عنوان الإعلان طويل جداً" });
+  return;
+}
+if (images && images.length > 10) {
+  res.status(400).json({ error: "الحد الأقصى 10 صور" });
+  return;
+}
   const [listing] = await db.insert(listingsTable).values({
     title,
     description: description || "",

@@ -20,6 +20,7 @@ import { useQueryClient } from '@tanstack/react-query';
 export default function Chat() {
   const [, params] = useRoute('/conversations/:id');
   const swapRequestId = parseInt(params?.id || '0');
+console.log("CHAT ID:", swapRequestId);
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const queryClient = useQueryClient();

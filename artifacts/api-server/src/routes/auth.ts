@@ -1,11 +1,20 @@
 import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
+import rateLimit from "express-rate-limit";
 import { db, usersTable } from "@workspace/db";
 import { RegisterBody, LoginBody, GetMeResponse } from "@workspace/api-zod";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: {
+    error: "محاولات كثيرة، حاول بعد قليل"
+  }
+});
 
 function formatUser(u: typeof usersTable.$inferSelect) {
   return {
@@ -23,8 +32,11 @@ function formatUser(u: typeof usersTable.$inferSelect) {
   };
 }
 
-router.post("/auth/register", async (req, res): Promise<void> => {
+
+// تسجيل حساب جديد
+router.post("/auth/register", authLimiter, async (req, res): Promise<void> => {
   const parsed = RegisterBody.safeParse(req.body);
+
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
@@ -32,13 +44,20 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
   const { name, email, password, phone, city } = parsed.data;
 
-  const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  const [existing] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.email, email));
+
   if (existing) {
-    res.status(400).json({ error: "البريد الإلكتروني مستخدم بالفعل" });
+    res.status(400).json({
+      error: "البريد الإلكتروني مستخدم بالفعل"
+    });
     return;
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+
   const [user] = await db.insert(usersTable).values({
     name,
     email,
@@ -50,64 +69,99 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   (req.session as any).userId = user.id;
   (req.session as any).isAdmin = user.isAdmin;
 
-  res.status(201).json({ user: formatUser(user) });
+  res.status(201).json({
+    user: formatUser(user)
+  });
 });
 
-router.post("/auth/login", async (req, res): Promise<void> => {
+
+// تسجيل الدخول
+router.post("/auth/login", authLimiter, async (req, res): Promise<void> => {
   const parsed = LoginBody.safeParse(req.body);
+
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+    res.status(400).json({
+      error: parsed.error.message
+    });
     return;
   }
 
   const { email, password } = parsed.data;
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.email, email));
 
   if (!user) {
-    res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
+    res.status(401).json({
+      error: "البريد الإلكتروني أو كلمة المرور غير صحيحة"
+    });
     return;
   }
 
   if (user.isBanned) {
-    res.status(403).json({ error: "تم حظر هذا الحساب" });
+    res.status(403).json({
+      error: "تم حظر هذا الحساب"
+    });
     return;
   }
 
   const valid = await bcrypt.compare(password, user.passwordHash);
+
   if (!valid) {
-    res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
+    res.status(401).json({
+      error: "البريد الإلكتروني أو كلمة المرور غير صحيحة"
+    });
     return;
   }
 
   (req.session as any).userId = user.id;
   (req.session as any).isAdmin = user.isAdmin;
 
-  res.json({ user: formatUser(user) });
+  res.json({
+    user: formatUser(user)
+  });
 });
 
+
+// تسجيل خروج
 router.post("/auth/logout", async (req, res): Promise<void> => {
   req.session.destroy((err) => {
     if (err) {
       logger.error({ err }, "Failed to destroy session");
     }
   });
+
   res.json({ ok: true });
 });
 
+
+// جلب المستخدم الحالي
 router.get("/auth/me", async (req, res): Promise<void> => {
   const userId = (req.session as any).userId;
+
   if (!userId) {
-    res.status(401).json({ error: "Not authenticated" });
+    res.status(401).json({
+      error: "Not authenticated"
+    });
     return;
   }
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, userId));
+
   if (!user) {
-    res.status(401).json({ error: "Not authenticated" });
+    res.status(401).json({
+      error: "Not authenticated"
+    });
     return;
   }
 
   res.json(GetMeResponse.parse(formatUser(user)));
 });
+
 
 export default router;
