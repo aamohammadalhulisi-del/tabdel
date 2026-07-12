@@ -1,3 +1,4 @@
+import AdBanner from "@/components/ads/AdBanner";
 import { Link, useLocation } from 'wouter';
 import {
   useGetCategories,
@@ -360,15 +361,20 @@ export default function Home() {
         </div>
 
 
+           </section>
+
+
+      {/* Advertisement */}
+      <section className="py-6">
+        <div className="container mx-auto px-4">
+          <AdBanner />
+        </div>
       </section>
 
 
 
 
-
-
-      {/* Bottom */}
-
+      {/* Categories */}
       <section className="py-20 bg-accent text-center">
 
 
