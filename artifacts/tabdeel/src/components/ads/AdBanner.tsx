@@ -1,23 +1,30 @@
 import { useEffect } from "react";
 
+declare global {
+  interface Window {
+    adsbygoogle: any[];
+  }
+}
+
 export default function AdBanner() {
   useEffect(() => {
     try {
-      // @ts-ignore
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (e) {
-      console.log(e);
+      console.log("AdSense error:", e);
     }
   }, []);
 
   return (
-    <ins
-      className="adsbygoogle"
-      style={{ display: "block" }}
-      data-ad-client="ca-pub-3491956593400214"
-      data-ad-slot="YOUR_AD_SLOT_ID"
-      data-ad-format="auto"
-      data-full-width-responsive="true"
-    />
+    <div className="w-full flex justify-center my-6">
+      <ins
+        className="adsbygoogle"
+        style={{ display: "block" }}
+        data-ad-format="fluid"
+        data-ad-layout-key="-fb+5w+4e-db+86"
+        data-ad-client="ca-pub-3491956593400214"
+        data-ad-slot="9594047856"
+      />
+    </div>
   );
 }
