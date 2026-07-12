@@ -1,6 +1,10 @@
 {
   "name": "workspace",
   "version": "0.0.0",
+"engines": {
+  "node": "22.x"
+},
+"packageManager": "pnpm@11.10.0"
   "license": "MIT",
   "scripts": {
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
@@ -8,7 +12,9 @@
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
   "private": true,
-  "packageManager": "pnpm@11.10.0",
+  "dependencies": {
+    "@replit/connectors-sdk": "^0.4.1"
+  },
   "devDependencies": {
     "@rollup/rollup-win32-x64-msvc": "^4.62.2",
     "@tailwindcss/oxide-win32-x64-msvc": "^4.3.2",
