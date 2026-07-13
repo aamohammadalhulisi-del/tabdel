@@ -24,8 +24,8 @@ const ALLOWED_ORIGINS = [
   /^https:\/\/.*\.replit\.dev$/,
   /^https:\/\/.*\.repl\.co$/,
   /^https:\/\/.*\.replit\.app$/,
+  /^https:\/\/.*\.vercel\.app$/,
 ];
-
 const app: Express = express();
 app.use(helmet());
 const limiter = rateLimit({
