@@ -41,9 +41,8 @@ const ALLOWED_ORIGINS = [
 
 app.use(
   cors({
-    origin: (origin, callback) => {
+    origin(origin, callback) {
 
-      // يسمح للطلبات بدون origin
       if (!origin) {
         return callback(null, true);
       }
@@ -54,9 +53,9 @@ app.use(
       }
 
 
-      console.log("BLOCKED CORS:", origin);
+      console.log("CORS BLOCKED:", origin);
 
-      callback(null, false);
+      return callback(null, false);
     },
 
     credentials: true,
@@ -78,6 +77,9 @@ app.use(
 );
 
 
+// مهم للـ preflight
+app.options("*", cors());
+
 
 // =====================
 // Security
@@ -85,23 +87,60 @@ app.use(
 
 app.use(
   helmet({
-    crossOriginResourcePolicy:false,
+    crossOriginResourcePolicy: false,
   })
 );
 
 
-
 // =====================
-// Limits
+// Body
 // =====================
 
 app.use(
-  rateLimit({
-    windowMs:15 * 60 * 1000,
-    max:200,
+  express.json({
+    limit: "20mb",
   })
 );
 
+
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: "20mb",
+  })
+);
+
+
+// =====================
+// Session
+// =====================
+
+app.use(
+  session({
+
+    store: new PgSession({
+      pool,
+      tableName: "sessions",
+      createTableIfMissing: true,
+    }),
+
+    secret: SESSION_SECRET,
+
+    resave: false,
+
+    saveUninitialized: false,
+
+    proxy: true,
+
+    cookie: {
+      secure: true,
+      httpOnly: true,
+      sameSite: "none",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    },
+
+  })
+);
 
 
 // =====================
@@ -115,62 +154,14 @@ app.use(
 );
 
 
-
 // =====================
-// Body
-// =====================
-
-app.use(
-  express.json({
-    limit:"20mb",
-  })
-);
-
-
-app.use(
-  express.urlencoded({
-    extended:true,
-    limit:"20mb",
-  })
-);
-
-
-
-// =====================
-// Session
+// Rate Limit
 // =====================
 
 app.use(
-  session({
-
-    store:new PgSession({
-      pool,
-      tableName:"sessions",
-      createTableIfMissing:true,
-    }),
-
-    secret:SESSION_SECRET,
-
-    resave:false,
-
-    saveUninitialized:false,
-
-
-    proxy:true,
-
-
-    cookie:{
-
-      secure:true,
-
-      httpOnly:true,
-
-      sameSite:"none",
-
-      maxAge:
-        30 * 24 * 60 * 60 * 1000,
-    },
-
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 200,
   })
 );
 
@@ -181,14 +172,14 @@ app.use(
 
 app.use("/api", router);
 
-// Test route
-app.get("/api/test",(req,res)=>{
+
+// Test
+app.get("/api/test", (req, res) => {
   res.json({
-    ok:true,
-    message:"API working"
+    ok: true,
+    message: "API working",
   });
 });
-
 
 
 export default app;

@@ -55,10 +55,9 @@ router.post(
       }
 
       const result = await cloudinary.uploader.upload(base64, {
-        upload_preset: "iklsruok",
-        folder: "tabdeel",
-        resource_type: "image",
-      });
+  folder: "tabdeel",
+  resource_type: "image",
+});
 
       res.json({
         url: result.secure_url,
