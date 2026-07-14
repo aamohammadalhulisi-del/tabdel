@@ -22,6 +22,7 @@ if (!SESSION_SECRET) {
 // Frontend domains
 const ALLOWED_ORIGINS = [
   "https://tabdeel-jordan-6tv8wrc4t-tabdel.vercel.app",
+  "https://tabdeel-jordan-i73m5g5q6-tabdel.vercel.app",
   "http://localhost:3000",
   "http://localhost:5173",
 ];
