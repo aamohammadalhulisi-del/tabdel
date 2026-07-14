@@ -78,7 +78,6 @@ app.use(
 
 
 // مهم للـ preflight
-app.options("*", cors());
 
 
 // =====================
