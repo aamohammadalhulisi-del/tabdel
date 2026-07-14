@@ -129,58 +129,27 @@ app.use(
 // Session
 app.use(
   session({
-
-    name: "connect.sid",
-
-
     store: new PgSession({
-
       pool,
-
       tableName: "sessions",
-
       createTableIfMissing: true,
-
     }),
-
 
     secret: SESSION_SECRET,
 
-
     resave: false,
-
-
     saveUninitialized: false,
-
 
     proxy: true,
 
-
     cookie: {
-
-      httpOnly: true,
-
       secure: true,
-
+      httpOnly: true,
       sameSite: "none",
-
-
-      maxAge:
-        30 *
-        24 *
-        60 *
-        60 *
-        1000,
-
+      domain: undefined,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     },
-
-  })
+  }),
 );
-
-
-
-app.use("/api", router);
-
-
 
 export default app;
