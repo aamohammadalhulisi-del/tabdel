@@ -1,31 +1,21 @@
-import { Router, type IRouter } from "express";
+import "dotenv/config";
+import app from "./app";
+import { logger } from "./lib/logger";
 
-import healthRouter from "./health";
-import authRouter from "./auth";
-import usersRouter from "./users";
-import categoriesRouter from "./categories";
-import listingsRouter from "./listings";
-import swapRequestsRouter from "./swapRequests";
-import messagesRouter from "./messages";
-import ratingsRouter from "./ratings";
-import reportsRouter from "./reports";
-import notificationsRouter from "./notifications";
-import uploadRouter from "./upload";
-import adminRouter from "./admin";
+const rawPort = process.env["PORT"] || "3001";
 
-const router: IRouter = Router();
+if (!rawPort) {
+  throw new Error(
+    "PORT environment variable is required but was not provided.",
+  );
+}
 
-router.use("/api", healthRouter);
-router.use("/api", authRouter);
-router.use("/api", usersRouter);
-router.use("/api", categoriesRouter);
-router.use("/api", listingsRouter);
-router.use("/api", swapRequestsRouter);
-router.use("/api", messagesRouter);
-router.use("/api", ratingsRouter);
-router.use("/api", reportsRouter);
-router.use("/api", notificationsRouter);
-router.use("/api", uploadRouter);
-router.use("/api", adminRouter);
+const port = Number(rawPort);
 
-export default router;
+if (Number.isNaN(port) || port <= 0) {
+  throw new Error(`Invalid PORT value: "${rawPort}"`);
+}
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`SERVER RUNNING ON PORT ${port}`);
+});

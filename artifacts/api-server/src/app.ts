@@ -175,15 +175,11 @@ app.use(
 );
 
 
-
-
 // =====================
 // Routes
 // =====================
 
-app.use(router);
-
-
+app.use("/api", router);
 
 // Test route
 app.get("/api/test",(req,res)=>{
