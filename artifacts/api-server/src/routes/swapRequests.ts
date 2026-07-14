@@ -108,8 +108,11 @@ router.get("/swap-requests", requireAuth, async (req, res): Promise<void> => {
 // إنشاء طلب تبديل
 router.post("/swap-requests", requireAuth, async (req, res): Promise<void> => {
 
-  const requesterId = (req.session as any).userId as number;
+  console.log("========== SWAP REQUEST ==========");
+  console.log("BODY:", req.body);
+  console.log("USER:", req.session.userId);
 
+  const requesterId = (req.session as any).userId as number;
 
   // إصلاح مشكلة وصول الرقم كنص
   const body = {
