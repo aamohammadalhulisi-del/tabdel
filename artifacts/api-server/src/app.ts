@@ -27,4 +27,160 @@ const ALLOWED_ORIGINS = [
 ];
 
 
-const app: Express
+const app: Express = express();
+
+
+// Railway proxy
+app.set("trust proxy", 1);
+
+
+// Security
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  })
+);
+
+
+// Rate limit
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+);
+
+
+// Logger
+app.use(
+  pinoHttp({
+    logger,
+    serializers: {
+      req(req) {
+        return {
+          id: req.id,
+          method: req.method,
+          url: req.url?.split("?")[0],
+        };
+      },
+      res(res) {
+        return {
+          statusCode: res.statusCode,
+        };
+      },
+    },
+  })
+);
+
+
+// CORS
+app.use(
+  cors({
+    origin(origin, callback) {
+
+      // allow curl / backend requests
+      if (!origin) {
+        return callback(null, true);
+      }
+
+
+      if (ALLOWED_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+
+
+      return callback(
+        new Error(`CORS blocked: ${origin}`)
+      );
+    },
+
+    credentials: true,
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+  })
+);
+
+
+
+app.use(
+  express.json({
+    limit: "20mb",
+  })
+);
+
+
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: "20mb",
+  })
+);
+
+
+
+// Session
+app.use(
+  session({
+
+    name: "connect.sid",
+
+
+    store: new PgSession({
+
+      pool,
+
+      tableName: "sessions",
+
+      createTableIfMissing: true,
+
+    }),
+
+
+    secret: SESSION_SECRET,
+
+
+    resave: false,
+
+
+    saveUninitialized: false,
+
+
+    proxy: true,
+
+
+    cookie: {
+
+      httpOnly: true,
+
+      secure: true,
+
+      sameSite: "none",
+
+
+      maxAge:
+        30 *
+        24 *
+        60 *
+        60 *
+        1000,
+
+    },
+
+  })
+);
+
+
+
+app.use("/api", router);
+
+
+
+export default app;
