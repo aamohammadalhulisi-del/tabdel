@@ -4,14 +4,14 @@ import pinoHttp from "pino-http";
 import session from "express-session";
 import rateLimit from "express-rate-limit";
 import connectPgSimple from "connect-pg-simple";
+import helmet from "helmet";
+
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { pool } from "@workspace/db";
-import helmet from "helmet";
 
 const PgSession = connectPgSimple(session);
 
-// Require SESSION_SECRET
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
 if (!SESSION_SECRET) {
@@ -19,12 +19,11 @@ if (!SESSION_SECRET) {
 }
 
 
-// Frontend domains
 const ALLOWED_ORIGINS = [
-  "https://tabdeel-jordan-6tv8wrc4t-tabdel.vercel.app",
   "https://tabdeel-jordan-i73m5g5q6-tabdel.vercel.app",
-  "http://localhost:3000",
+  "https://tabdeel-jordan-6tv8wrc4t-tabdel.vercel.app",
   "http://localhost:5173",
+  "http://localhost:3000",
 ];
 
 
@@ -43,45 +42,12 @@ app.use(
 );
 
 
-// Rate limit
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 200,
-    standardHeaders: true,
-    legacyHeaders: false,
-  })
-);
-
-
-// Logger
-app.use(
-  pinoHttp({
-    logger,
-    serializers: {
-      req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
-      },
-      res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
-      },
-    },
-  })
-);
-
-
-// CORS
+// CORS لازم يكون قبل الراوتس
 app.use(
   cors({
-    origin(origin, callback) {
+    origin: function (origin, callback) {
 
-      // allow curl / backend requests
+      // يسمح للطلبات بدون origin
       if (!origin) {
         return callback(null, true);
       }
@@ -92,12 +58,13 @@ app.use(
       }
 
 
-      return callback(
-        new Error(`CORS blocked: ${origin}`)
-      );
+      console.log("Blocked CORS:", origin);
+
+      return callback(null, false);
     },
 
     credentials: true,
+
     methods: [
       "GET",
       "POST",
@@ -106,11 +73,16 @@ app.use(
       "DELETE",
       "OPTIONS",
     ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
   })
 );
 
 
-
+// Body parser
 app.use(
   express.json({
     limit: "20mb",
@@ -126,31 +98,123 @@ app.use(
 );
 
 
+// Logger
+app.use(
+  pinoHttp({
+    logger,
+
+    serializers: {
+      req(req) {
+        return {
+          id: req.id,
+          method: req.method,
+          url: req.url,
+        };
+      },
+
+      res(res) {
+        return {
+          statusCode: res.statusCode,
+        };
+      },
+    },
+  })
+);
+
+
+// Rate limit
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+);
+
 
 // Session
 app.use(
   session({
+
     store: new PgSession({
       pool,
       tableName: "sessions",
       createTableIfMissing: true,
     }),
 
+
     secret: SESSION_SECRET,
 
+
     resave: false,
+
     saveUninitialized: false,
+
 
     proxy: true,
 
+
     cookie: {
+
       secure: true,
+
       httpOnly: true,
+
       sameSite: "none",
-      domain: undefined,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+
+      maxAge:
+        30 *
+        24 *
+        60 *
+        60 *
+        1000,
     },
-  }),
+
+  })
 );
+
+
+
+// Routes
+app.use(router);
+
+
+// اختبار السيرفر
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "Tabdeel API running"
+  });
+});
+
+
+// 404
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Route not found",
+    path: req.path
+  });
+});
+
+
+// Error handler
+app.use(
+  (
+    err: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: "Internal server error"
+    });
+
+  }
+);
+
 
 export default app;
