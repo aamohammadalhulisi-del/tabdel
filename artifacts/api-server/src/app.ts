@@ -10,14 +10,26 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { pool } from "@workspace/db";
 
+
 const PgSession = connectPgSimple(session);
+
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
 if (!SESSION_SECRET) {
-  throw new Error("SESSION_SECRET environment variable is required");
+  throw new Error("SESSION_SECRET is missing");
 }
 
+
+const app: Express = express();
+
+
+app.set("trust proxy", 1);
+
+
+// =====================
+// CORS
+// =====================
 
 const ALLOWED_ORIGINS = [
   "https://tabdeel-jordan-i73m5g5q6-tabdel.vercel.app",
@@ -27,25 +39,9 @@ const ALLOWED_ORIGINS = [
 ];
 
 
-const app: Express = express();
-
-
-// Railway proxy
-app.set("trust proxy", 1);
-
-
-// Security
-app.use(
-  helmet({
-    crossOriginResourcePolicy: false,
-  })
-);
-
-
-// CORS لازم يكون قبل الراوتس
 app.use(
   cors({
-    origin: function (origin, callback) {
+    origin: (origin, callback) => {
 
       // يسمح للطلبات بدون origin
       if (!origin) {
@@ -58,9 +54,9 @@ app.use(
       }
 
 
-      console.log("Blocked CORS:", origin);
+      console.log("BLOCKED CORS:", origin);
 
-      return callback(null, false);
+      callback(null, false);
     },
 
     credentials: true,
@@ -82,93 +78,101 @@ app.use(
 );
 
 
-// Body parser
+// preflight
+app.options("*", cors());
+
+
+
+// =====================
+// Security
+// =====================
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy:false,
+  })
+);
+
+
+
+// =====================
+// Limits
+// =====================
+
+app.use(
+  rateLimit({
+    windowMs:15 * 60 * 1000,
+    max:200,
+  })
+);
+
+
+
+// =====================
+// Logs
+// =====================
+
+app.use(
+  pinoHttp({
+    logger,
+  })
+);
+
+
+
+// =====================
+// Body
+// =====================
+
 app.use(
   express.json({
-    limit: "20mb",
+    limit:"20mb",
   })
 );
 
 
 app.use(
   express.urlencoded({
-    extended: true,
-    limit: "20mb",
+    extended:true,
+    limit:"20mb",
   })
 );
 
 
-// Logger
-app.use(
-  pinoHttp({
-    logger,
 
-    serializers: {
-      req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url,
-        };
-      },
-
-      res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
-      },
-    },
-  })
-);
-
-
-// Rate limit
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 200,
-    standardHeaders: true,
-    legacyHeaders: false,
-  })
-);
-
-
+// =====================
 // Session
+// =====================
+
 app.use(
   session({
 
-    store: new PgSession({
+    store:new PgSession({
       pool,
-      tableName: "sessions",
-      createTableIfMissing: true,
+      tableName:"sessions",
+      createTableIfMissing:true,
     }),
 
+    secret:SESSION_SECRET,
 
-    secret: SESSION_SECRET,
+    resave:false,
 
-
-    resave: false,
-
-    saveUninitialized: false,
+    saveUninitialized:false,
 
 
-    proxy: true,
+    proxy:true,
 
 
-    cookie: {
+    cookie:{
 
-      secure: true,
+      secure:true,
 
-      httpOnly: true,
+      httpOnly:true,
 
-      sameSite: "none",
+      sameSite:"none",
 
       maxAge:
-        30 *
-        24 *
-        60 *
-        60 *
-        1000,
+        30 * 24 * 60 * 60 * 1000,
     },
 
   })
@@ -176,45 +180,23 @@ app.use(
 
 
 
+
+// =====================
 // Routes
+// =====================
+
 app.use(router);
 
 
-// اختبار السيرفر
-app.get("/api/health", (req, res) => {
+
+// Test route
+app.get("/api/test",(req,res)=>{
   res.json({
-    status: "ok",
-    message: "Tabdeel API running"
+    ok:true,
+    message:"API working"
   });
 });
 
-
-// 404
-app.use((req, res) => {
-  res.status(404).json({
-    error: "Route not found",
-    path: req.path
-  });
-});
-
-
-// Error handler
-app.use(
-  (
-    err: any,
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) => {
-
-    console.error(err);
-
-    res.status(500).json({
-      error: "Internal server error"
-    });
-
-  }
-);
 
 
 export default app;
