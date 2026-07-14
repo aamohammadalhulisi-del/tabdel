@@ -78,10 +78,6 @@ app.use(
 );
 
 
-// preflight
-app.options("*", cors());
-
-
 
 // =====================
 // Security
