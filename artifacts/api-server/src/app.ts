@@ -34,6 +34,7 @@ app.set("trust proxy", 1);
 const ALLOWED_ORIGINS = [
   "https://tabdeel-jordan-i73m5g5q6-tabdel.vercel.app",
   "https://tabdeel-jordan-6tv8wrc4t-tabdel.vercel.app",
+  "https://imaginative-gelato-39d4b9.netlify.app",
   "http://localhost:5173",
   "http://localhost:3000",
 ];
